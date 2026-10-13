@@ -1,0 +1,50 @@
+src/geom.rs
+  s_d7782172923615::t_1eb658052b2553 1-121
+src/route.rs
+  s_d7782172923615::t_f8d88a92cc89d4 1-216
+  s_d7782172923615::t_38e34f80c0cb64 217-228
+src/lib.rs
+  s_d7782172923615::t_07bf26eb769872 1-640,645
+  s_d7782172923615::t_05ecbae5712214 641-644,646-686
+src/flatten.rs
+  s_d7782172923615::t_47cd22f18516e5 1-262
+  s_d7782172923615::t_60cf97770f73cc 263-269
+src/shape.rs
+  s_d7782172923615::t_15922d5a1ef0a8 1-742
+  s_d7782172923615::t_4130207e5430ab 743-789
+src/theme.rs
+  s_d7782172923615::t_1f5f53534c4903 1-219
+src/svg.rs
+  s_d7782172923615::t_f04ac2dd25e68a 1-458,465-466
+  s_d7782172923615::t_66fea1535cb013 459-464,467-509
+.gitignore
+  s_d7782172923615::t_f0a42df8645309 1-2
+Cargo.lock
+  s_d7782172923615::t_ce41e1f89a02f8 1-642
+Cargo.toml
+  s_d7782172923615::t_192fbcfac083d8 1-26
+README.md
+  s_d7782172923615::t_d44886fdcb9907 1-60
+examples/gallery.rs
+  s_d7782172923615::t_cc3de8134dbee0 1-230
+rust-toolchain.toml
+  s_d7782172923615::t_6ba450f3ab96c6 1-4
+src/measure.rs
+  s_d7782172923615::t_5992a8b966320f 1-37
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "c49b0802763390cb2200d9041bae4c19ddfa4def",
+  "prompts": {},
+  "sessions": {
+    "s_d7782172923615": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "506037c1-7fb7-4578-b793-43e4dc2baa8c",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Graham Brooks <graham@grahambrooks.com>"
+    }
+  }
+}
