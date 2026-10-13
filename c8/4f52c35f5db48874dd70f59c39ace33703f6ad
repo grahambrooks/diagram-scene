@@ -1,0 +1,19 @@
+LICENSE
+  s_d7782172923615::t_733c185988323f 1-21
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "c84f52c35f5db48874dd70f59c39ace33703f6ad",
+  "prompts": {},
+  "sessions": {
+    "s_d7782172923615": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "506037c1-7fb7-4578-b793-43e4dc2baa8c",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Graham Brooks <graham@grahambrooks.com>"
+    }
+  }
+}
