@@ -1,0 +1,26 @@
+[package]
+name = "diagram-scene"
+version = "2026.10.0"
+edition = "2024"
+# Tracks latest stable, pinned in rust-toolchain.toml.
+rust-version = "1.98.1"
+description = "A laid-out software diagram as data: shapes, containers, routed edges and theme roles, shared by mmd, puml and forge"
+repository = "https://github.com/grahambrooks/diagram-scene"
+license = "MIT"
+publish = false
+
+[features]
+default = ["svg"]
+# Write a scene as SVG with a theme.
+svg = []
+# Measure text by shaping it with fonts the caller supplies.
+measure = ["dep:rustybuzz"]
+
+[dependencies]
+rustybuzz = { version = "0.20", optional = true }
+
+[dev-dependencies]
+# The gallery example only.
+resvg = "0.48"
+
+
