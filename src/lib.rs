@@ -40,9 +40,15 @@ pub struct Scene {
     pub font_size: f32,
     /// Drawn centred at the top, in the space the layout left for it.
     pub title: Option<Text>,
+    /// What assistive technology reads: the accessible name and
+    /// description, never drawn.
+    pub accessibility: Accessibility,
     /// Drawn first, outermost first (a container precedes those inside it).
     pub containers: Vec<Container>,
-    /// Drawn over the containers.
+    /// Filled regions — wedges, bars, ribbons, set circles — drawn over the
+    /// containers and under the edges, in order.
+    pub areas: Vec<Area>,
+    /// Drawn over the areas.
     pub edges: Vec<Edge>,
     /// Drawn over the edges.
     pub nodes: Vec<Node>,
@@ -105,6 +111,40 @@ impl Scene {
 
     pub fn node(&self, id: &str) -> Option<&Node> {
         self.nodes.iter().find(|n| n.id == id)
+    }
+}
+
+/// A diagram's accessible name and description. A painter that can carry
+/// them (SVG's `<title>` and `<desc>`) does; none draws them.
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct Accessibility {
+    pub title: Option<String>,
+    pub description: Option<String>,
+}
+
+/// A filled region: a pie wedge, a bar, a sankey ribbon, a set in a Venn
+/// diagram. Unlike a [`Node`] it has no label and any outline; unlike an
+/// [`Edge`] it is filled. Text that belongs to it goes in [`Scene::texts`].
+#[derive(Debug, Clone, PartialEq)]
+pub struct Area {
+    /// A closed outline (or several, for holes: filled non-zero).
+    pub path: Vec<Seg>,
+    pub fill: Paint,
+    /// 0 (clear) to 1 (solid): below 1, what is underneath shows through.
+    pub opacity: f32,
+    /// An outline drawn over the fill, if any.
+    pub stroke: Option<Pen>,
+}
+
+impl Area {
+    /// A solid, unoutlined region.
+    pub fn new(path: Vec<Seg>, fill: Paint) -> Self {
+        Area {
+            path,
+            fill,
+            opacity: 1.0,
+            stroke: None,
+        }
     }
 }
 
@@ -384,6 +424,8 @@ pub struct EdgeLabel {
     /// The widest line's width, as the layout measured it (for the pill);
     /// 0 to let the painter estimate.
     pub width: f32,
+    /// The text's colour; [`Role::Muted`] unless the diagram set one.
+    pub paint: Paint,
 }
 
 impl EdgeLabel {
@@ -404,6 +446,7 @@ impl EdgeLabel {
             lines,
             pill,
             width,
+            paint: Paint::Role(Role::Muted),
         }
     }
 
@@ -608,6 +651,34 @@ pub struct Text {
     pub paint: Paint,
     /// Drawn on the background colour, so it reads where a line crosses.
     pub backed: bool,
+    /// Degrees clockwise about `pos`: 0 is level, -90 reads bottom to top
+    /// (a y-axis title).
+    pub rotate: f32,
+}
+
+impl Text {
+    /// Level, unbacked text in the text colour.
+    pub fn new(pos: Point, anchor: Anchor, line: TextLine) -> Self {
+        Text {
+            pos,
+            anchor,
+            line,
+            ..Text::default()
+        }
+    }
+}
+
+impl Default for Text {
+    fn default() -> Self {
+        Text {
+            pos: Point::new(0.0, 0.0),
+            anchor: Anchor::Start,
+            line: TextLine::default(),
+            paint: Paint::Role(Role::Text),
+            backed: false,
+            rotate: 0.0,
+        }
+    }
 }
 
 /// Where `pos` is on a line of text: its baseline's start, middle or end.

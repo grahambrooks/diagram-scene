@@ -28,7 +28,17 @@ A scene is semantic rather than a list of primitives:
   thin to heavy), a marker at each end (arrow, open arrow, UML hollow
   triangle and diamonds, circle, cross, crow's feet for each cardinality),
   labels (optionally on a pill) and step numbers.
-- Free text, a title and a legend.
+- **Areas**: filled regions with no label of their own — pie wedges, bars,
+  ribbons, set circles — with an opacity (below 1, what is underneath shows
+  through) and an optional outline. Drawn over containers, under edges.
+- Free text, which may be rotated about its anchor, a title and a legend.
+- **Accessibility**: an accessible name and description that painters carry
+  where they can (SVG `<title>` and `<desc>`, with `role="img"`) and never
+  draw.
+
+Edge labels carry their own colour (muted unless the diagram set one).
+`Text::new` and `Text::default()` exist so new fields need not break
+callers; prefer them to struct literals.
 
 Colours are `Role`s (background, surface, text, muted, line, accent, person,
 system, database, trust zones, series…) that a theme resolves, so a scene is

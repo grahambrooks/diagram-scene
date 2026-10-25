@@ -69,6 +69,7 @@ fn gallery() -> Scene {
         line: TextLine::new("diagram-scene gallery", Font::Title),
         paint: Paint::Role(Role::Text),
         backed: false,
+        rotate: 0.0,
     });
     // Shapes in a grid.
     let (cols, cell_w, cell_h, top) = (6, 160.0, 120.0, 60.0);
@@ -163,6 +164,7 @@ fn gallery() -> Scene {
             lines: vec![TextLine::new(*name, Font::Small)],
             pill: i % 2 == 0,
             width: 0.0,
+            paint: Paint::Role(Role::Muted),
         });
         scene.edges.push(e);
     }
@@ -174,6 +176,8 @@ fn gallery() -> Scene {
         lines: vec![TextLine::new("reads/writes", Font::Small)],
         pill: true,
         width: 0.0,
+        // A diagram-set label colour.
+        paint: Paint::Rgb(0xb8, 0x86, 0x0b),
     });
     scene.edges.push(e);
     // Containers.
@@ -225,6 +229,56 @@ fn gallery() -> Scene {
             },
         ],
     });
+    areas(&mut scene);
+    scene.accessibility.title = Some("diagram-scene gallery".into());
+    scene.accessibility.description =
+        Some("Every shape, marker, container and area the scene model can draw.".into());
     scene.width = 1000.0;
+    scene.height = 1010.0;
     scene
+}
+
+/// Filled areas: solid pie wedges, translucent overlapping sets, and a
+/// rotated axis title.
+fn areas(scene: &mut Scene) {
+    use diagram_scene::{Area, Pen, Seg, Weight};
+    let (cx, cy, r) = (120.0, 930.0, 60.0);
+    let mut start = -std::f32::consts::FRAC_PI_2;
+    for (i, share) in [0.5_f32, 0.3, 0.2].into_iter().enumerate() {
+        let end = start + share * std::f32::consts::TAU;
+        let mut path = vec![Seg::Move(Point::new(cx, cy))];
+        let steps = (share * 48.0).ceil() as usize;
+        for k in 0..=steps {
+            let a = start + (end - start) * k as f32 / steps as f32;
+            path.push(Seg::Line(Point::new(cx + r * a.cos(), cy + r * a.sin())));
+        }
+        path.push(Seg::Close);
+        let mut wedge = Area::new(path, Paint::Role(Role::Series(i as u8)));
+        wedge.stroke = Some(Pen {
+            paint: Paint::Role(Role::Background),
+            weight: Weight::Thick,
+            ..Pen::default()
+        });
+        scene.areas.push(wedge);
+        start = end;
+    }
+    for (i, x) in [330.0_f32, 400.0].into_iter().enumerate() {
+        let mut set = Area::new(
+            diagram_scene::shape::ellipse(Point::new(x, 930.0), 60.0, 60.0),
+            Paint::Role(Role::Series(i as u8 + 3)),
+        );
+        set.opacity = 0.35;
+        set.stroke = Some(Pen {
+            paint: Paint::Role(Role::Series(i as u8 + 3)),
+            ..Pen::default()
+        });
+        scene.areas.push(set);
+    }
+    let mut axis = Text::new(
+        Point::new(540.0, 930.0),
+        Anchor::Middle,
+        TextLine::new("Rotated -90°", Font::Bold),
+    );
+    axis.rotate = -90.0;
+    scene.texts.push(axis);
 }

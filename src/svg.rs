@@ -14,9 +14,16 @@ pub fn to_svg(scene: &Scene, theme: &Theme) -> String {
     let (w, h) = (scene.width.ceil(), scene.height.ceil());
     let _ = write!(
         out,
-        r#"<svg xmlns="http://www.w3.org/2000/svg" width="{w}" height="{h}" viewBox="0 0 {w} {h}" font-family="{}">"#,
+        r#"<svg xmlns="http://www.w3.org/2000/svg" width="{w}" height="{h}" viewBox="0 0 {w} {h}" font-family="{}" role="img">"#,
         attr(&theme.font_family)
     );
+    // First children, so assistive technology finds the accessible name.
+    if let Some(title) = &scene.accessibility.title {
+        let _ = write!(out, "<title>{}</title>", escape(title));
+    }
+    if let Some(desc) = &scene.accessibility.description {
+        let _ = write!(out, "<desc>{}</desc>", escape(desc));
+    }
     let _ = write!(
         out,
         r#"<rect width="{w}" height="{h}" fill="{}"/>"#,
@@ -25,6 +32,9 @@ pub fn to_svg(scene: &Scene, theme: &Theme) -> String {
     let base = scene.font_size;
     for c in &scene.containers {
         container(&mut out, theme, c, base);
+    }
+    for a in &scene.areas {
+        area(&mut out, theme, a);
     }
     for e in &scene.edges {
         edge(&mut out, theme, e);
@@ -37,6 +47,16 @@ pub fn to_svg(scene: &Scene, theme: &Theme) -> String {
         edge_text(&mut out, theme, e, base);
     }
     for t in &scene.texts {
+        let rotated = t.rotate != 0.0;
+        if rotated {
+            let _ = write!(
+                out,
+                r#"<g transform="rotate({} {} {})">"#,
+                r(t.rotate),
+                r(t.pos.x),
+                r(t.pos.y)
+            );
+        }
         if t.backed {
             let w = crate::line_width(&crate::Estimate, &t.line, base) + 6.0;
             let size = t.line.font().size(base);
@@ -55,6 +75,9 @@ pub fn to_svg(scene: &Scene, theme: &Theme) -> String {
             );
         }
         text(&mut out, theme, t.pos, t.anchor, &t.line, t.paint, base);
+        if rotated {
+            out.push_str("</g>");
+        }
     }
     if let Some(title) = &scene.title {
         text(
@@ -177,6 +200,34 @@ fn container(out: &mut String, theme: &Theme, c: &crate::Container, base: f32) {
     }
 }
 
+fn area(out: &mut String, theme: &Theme, a: &crate::Area) {
+    if a.path.is_empty() {
+        return;
+    }
+    let _ = write!(
+        out,
+        r#"<path d="{}" fill="{}""#,
+        path_data(&a.path),
+        fill_attr(theme, a.fill)
+    );
+    let opacity = a.opacity.clamp(0.0, 1.0);
+    if opacity < 1.0 {
+        let _ = write!(out, r#" fill-opacity="{}""#, r(opacity));
+    }
+    if let Some(pen) = a.stroke
+        && pen.paint != Paint::None
+    {
+        let width = pen.weight.width();
+        let _ = write!(
+            out,
+            r#" stroke="{}" stroke-width="{width}" stroke-linejoin="round"{}"#,
+            color(theme, pen.paint),
+            dash_attr(pen.dash, width)
+        );
+    }
+    out.push_str("/>");
+}
+
 fn edge(out: &mut String, theme: &Theme, e: &Edge) {
     let width = e.pen.weight.width();
     path(
@@ -239,7 +290,7 @@ fn edge_text(out: &mut String, theme: &Theme, e: &Edge, base: f32) {
                 crate::Point::new(label.pos.x, y),
                 Anchor::Middle,
                 line,
-                Paint::Role(Role::Muted),
+                label.paint,
                 base,
             );
             top += lh;
@@ -505,5 +556,82 @@ mod tests {
         assert!(svg.contains(&theme.background.to_string()));
         assert!(svg.contains("Ledger &lt;DB&gt;"), "text is escaped");
         assert!(svg.contains(&theme.text.to_string()));
+    }
+
+    #[test]
+    fn accessibility_comes_first_and_is_escaped() {
+        let mut scene = sample();
+        scene.accessibility.title = Some("Pay & ship".into());
+        scene.accessibility.description = Some("Customer <-> ledger".into());
+        let svg = to_svg(&scene, &Theme::light());
+        let body = &svg[svg.find('>').unwrap() + 1..];
+        assert!(svg.contains(r#"role="img""#));
+        assert!(
+            body.starts_with("<title>Pay &amp; ship</title><desc>Customer &lt;-&gt; ledger</desc>")
+        );
+    }
+
+    #[test]
+    fn no_accessibility_writes_no_title() {
+        let svg = to_svg(&sample(), &Theme::light());
+        assert!(!svg.contains("<title>") && !svg.contains("<desc>"));
+    }
+
+    #[test]
+    fn areas_fill_under_edges_with_their_opacity() {
+        let mut scene = sample();
+        let wedge = crate::shape::polygon(&[
+            crate::Point::new(0.0, 0.0),
+            crate::Point::new(50.0, 0.0),
+            crate::Point::new(0.0, 50.0),
+        ]);
+        let mut area = crate::Area::new(wedge, Paint::Rgb(0x12, 0x34, 0x56));
+        area.opacity = 0.5;
+        area.stroke = Some(crate::Pen::default());
+        scene.areas.push(area);
+        let svg = to_svg(&scene, &Theme::light());
+        let at = svg
+            .find(r##"fill="#123456" fill-opacity="0.5""##)
+            .expect("area drawn");
+        let first_edge = svg.find("stroke-linecap").expect("edge drawn");
+        assert!(at < first_edge, "areas paint under edges");
+    }
+
+    #[test]
+    fn rotated_text_turns_about_its_anchor() {
+        let mut scene = sample();
+        let mut t = crate::Text::new(
+            crate::Point::new(20.0, 60.0),
+            Anchor::Middle,
+            TextLine::new("Revenue", Font::Body),
+        );
+        t.rotate = -90.0;
+        t.backed = true;
+        scene.texts.push(t);
+        let svg = to_svg(&scene, &Theme::light());
+        let g = svg
+            .find(r#"<g transform="rotate(-90 20 60)">"#)
+            .expect("rotated group");
+        let close = svg[g..].find("</g>").expect("group closed") + g;
+        assert!(svg[g..close].contains("Revenue"), "text inside the group");
+        assert!(svg[g..close].contains("<path"), "its backing turns with it");
+    }
+
+    #[test]
+    fn edge_labels_take_their_own_colour() {
+        let mut scene = sample();
+        let label = crate::EdgeLabel {
+            paint: Paint::Rgb(0xab, 0xcd, 0xef),
+            ..crate::EdgeLabel::new(
+                crate::Point::new(150.0, 50.0),
+                vec![TextLine::new("pays", Font::Small)],
+                true,
+                &crate::Estimate,
+                14.0,
+            )
+        };
+        scene.edges[0].labels.push(label);
+        let svg = to_svg(&scene, &Theme::light());
+        assert!(svg.contains(r##"fill="#abcdef">"##));
     }
 }
