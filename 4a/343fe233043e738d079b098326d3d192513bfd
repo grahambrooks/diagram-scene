@@ -1,0 +1,25 @@
+README.md
+  s_0c7b5d39344b95::t_3d0980cd9d0b20 31-41
+examples/gallery.rs
+  s_0c7b5d39344b95::t_1cd4de300a3fa9 72,167,179-180,232-235,237,240-284
+src/lib.rs
+  s_0c7b5d39344b95::t_895789df8935fa 43-45,48-51,117-150,427-428,449,654-681
+src/svg.rs
+  s_0c7b5d39344b95::t_9bdc631572182e 17,20-26,36-38,50-59,78-80,203-230,293,560-636
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "4a343fe233043e738d079b098326d3d192513bfd",
+  "prompts": {},
+  "sessions": {
+    "s_0c7b5d39344b95": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d7ddb829-8b8a-4e74-b861-93398a7d9c8c",
+        "model": "unknown"
+      },
+      "human_author": "Graham Brooks <graham@grahambrooks.com>"
+    }
+  }
+}
