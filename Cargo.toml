@@ -22,5 +22,3 @@ rustybuzz = { version = "0.20", optional = true }
 [dev-dependencies]
 # The gallery example only.
 resvg = "0.48"
-
-
