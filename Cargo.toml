@@ -3,7 +3,7 @@ name = "diagram-scene"
 version = "2026.10.25"
 edition = "2024"
 # Tracks latest stable, pinned in rust-toolchain.toml.
-rust-version = "1.99.0"
+rust-version = "1.99.1"
 description = "A laid-out software diagram as data: shapes, containers, routed edges and theme roles, shared by mmd, puml and forge"
 repository = "https://github.com/grahambrooks/diagram-scene"
 license = "MIT"
